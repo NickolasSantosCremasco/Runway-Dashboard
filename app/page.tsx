@@ -137,7 +137,7 @@ export default function Home() {
           </div>
         </div>
 
-        <p className="text-white1">Segurança financeira</p>
+        
       </div>
     </div>
 
