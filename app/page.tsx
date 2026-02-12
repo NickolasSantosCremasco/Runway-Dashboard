@@ -1,65 +1,146 @@
-import Image from "next/image";
+"use client";
+
+import { useState, useEffect } from "react";
+import { addMonths, format } from "date-fns";
+import { ptBR } from "date-fns/locale";
+
+type StatusConfig = {
+  text: string;
+  color: string;
+  bgColor: string;
+  borderColor: string;
+};
+
 
 export default function Home() {
+  const [cash, setCash]= useState("")
+  const [expenses, setExpenses] = useState("")
+  const [runway, setRunway] = useState(0)
+
+  const formatCurrency = (value: string) => {
+    const digits = value.replace(/\D/g, "");
+
+    const amout = Number(digits) /100
+
+    return new Intl.NumberFormat('pt-BR', {
+      style: 'currency',
+      currency: 'BRL',
+    }).format(amout)
+  }
+
+  useEffect(() => {
+      localStorage.setItem('runway-data', JSON.stringify({cash, expenses}));
+    }, [cash, expenses]
+  )
+
+  useEffect(() => {
+    const saved = localStorage.getItem('runway-data');
+    if (saved){
+      const { cash: s, expenses: e} = JSON.parse(saved);
+      setCash(s);
+      setExpenses(e)
+    }
+  }, []);
+
+  useEffect(() => {
+  
+    const parseValue = (val: string) => {
+    // Remove tudo que não é dígito e divide por 100 para ter as casas decimais
+    const cleanValue = val.replace(/\D/g, "");
+    return cleanValue ? parseFloat(cleanValue) / 100 : 0;
+  };
+    const s = parseValue(cash) ;
+    const e = parseValue(expenses) ;
+
+    if (e > 0) {
+      setRunway(s / e)
+    } else {
+      setRunway(0)
+    }
+
+  }, [cash, expenses]) 
+
+    const getStatusData = (months: number): StatusConfig => {
+      if (months <= 0) return {
+        text: 'Insira seus dados para calcular sua sobrevivência',
+        color: 'text-slate-400',
+        bgColor: 'bg-slate-800/30',
+        borderColor: 'border-slate-700'
+      };
+      
+      if (months < 3) return {
+        text: 'PERIGO: Sua reserva é crítica. Se um layoff acontecer hoje, você terá pouco tempo de manobra. Corte gastos imediatamente!',
+        color: 'text-red-500',
+        bgColor: 'bg-red-900/20',
+        borderColor: 'border-red-700'
+      };
+
+      if (months < 6) return {
+        text: 'Alerta: Sua margem é moderada. Tente atingir o objetivo de 6 meses de reserva para maior segurança.',
+        color: 'text-yellow-500',
+        bgColor: 'bg-yellow-900/20',
+        borderColor: 'border-yellow-700'
+      };
+
+      // O "SAFEGUARD": Se não entrou em nenhum if acima (ou seja, >= 6), ele obrigatoriamente retorna este
+      return {
+        text: 'Segurança: Parabéns! Você possui um runway sólido. É o momento ideal para focar em aportes e renda passiva.',
+        color: 'text-green-400',
+        bgColor: 'bg-green-800/30',
+        borderColor: 'border-green-700'
+      };
+    }
+    
+
+    const status = getStatusData(runway)
+
+    if (!status) {
+      return <div>Erro: Não foi possível calcular o status</div>
+    }
+
+    const survivalDate = runway > 0 ? addMonths(new Date(), runway) : null;
+    
   return (
-    <div className="flex min-h-screen items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex min-h-screen w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
-        </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
-        </div>
-      </main>
+   <main className="bg-slate-950 w-full min-h-screen flex flex-col justify-center items-center p-4">
+    <div className="max-w-md w-full mb-6 text-center">
+      <h1 className="text-green-600 font-bold text-center text-3xl p-4">Runway Dashboard</h1>
+      <p className="text-slate-400">Não Calcule Saldo. Calcule tempo de <span className="text-red-600 font-semibold">Sobrevivência</span></p>
     </div>
+
+    <div className="w-full max-w-md bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-xl">
+      <div className="space-y-6">
+        <form action="" className="flex justify-center items-center flex-col gap-6">
+          <div className="flex flex-col w-full">
+            <label htmlFor="salary" className="text-white font-bold text-xl p-4 text-center">Digite Aqui Seu Salário</label>
+            <input type="text" id="salary" name="salary" value={cash} onChange={(e) => setCash(formatCurrency(e.target.value))} className="bg-white  rounded-md p-2" placeholder="R$ 0,00" /> 
+          </div>
+
+          <div className="flex flex-col w-full">
+            <label htmlFor="expenses" className="text-white font-bold text-xl p-4 text-center">Digite Aqui suas Dívidas Mensais</label>
+            <input type="text" id="expenses" name="expenses" value={expenses} onChange={(e) => setExpenses(formatCurrency(e.target.value))} className="bg-white rounded-md p-2" placeholder="R$ 0,00"/> 
+          </div>
+            
+
+        </form>
+        
+        {survivalDate && (
+          <div className="mb-4 px-4 py-1 bg-slate-950 border border-slate-800 rounded-full text-xs text-slate-400 animate-pulse">
+            Duração Máxima: <span className="text-white font-bold">{format(survivalDate, "dd 'de' MMMM 'de' yyyy", { locale: ptBR })}</span>
+          </div>
+        )}
+        <div className="flex text-white justify-center flex-col items-center">
+          <p className="text-xl">Você possui:</p>
+          <h1 className={`text-4xl font-bold ${status.color}`}>{runway.toFixed(1)} Meses</h1>
+
+          <div className={`${status.color} ${status.bgColor} border ${status.borderColor} p-5 mt-4 rounded-2xl`}>
+            <p>{status.text}</p>
+          </div>
+        </div>
+
+        <p className="text-white1">Segurança financeira</p>
+      </div>
+    </div>
+
+   </main>
   );
 }

@@ -1,36 +1,32 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+The Problem (The "Why")
+In the tech industry, it's common for high-salaried developers to fall into the "lifestyle creep" trap (increasing spending as salary rises). In a scenario of market instability and layoffs, many professionals lack clear visibility into their financial resilience. Bank balance is often a vanity metric; the real survival metric is Runway (how long you can survive without new income).
 
-## Getting Started
+-------------------------------------------------------------------------------------------------------------------------------------------
+The Solution
+The Runway Dashboard is a predictive financial analytics tool designed specifically for developers. It converts raw liquidity and monthly spending data into a tangible "Crash Date," allowing users to make data-driven decisions before a crisis occurs.
 
-First, run the development server:
+-------------------------------------------------------------------------------------------------------------------------------------------
+Technical Stack & Decisions
+Next.js 15 (App Router): Chosen for its superior rendering performance and modern routing structure.
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+Tailwind CSS: Used to build a focused, utility-first UI with emotional UX (using colors as psychological triggers).
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Lucide React: For consistent and accessible iconography.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+Date-fns: Utilized for precise manipulation of date objects to calculate exact "financial death dates."
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+-------------------------------------------------------------------------------------------------------------------------------------------
+Architecture & Principles
+Privacy First: No financial data is ever sent to a server. All mathematical processing occurs strictly on the client-side to ensure 100% data privacy.
 
-## Learn More
+Zero Friction UX: The MVP was designed to deliver value in less than 10 seconds, removing the need for authentication or complex setups.
 
-To learn more about Next.js, take a look at the following resources:
+Responsive Design: A fully flexible interface, ensuring developers can monitor their financial health on any device or resolution.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+-------------------------------------------------------------------------------------------------------------------------------------------
+Roadmap
+What-if Simulations: A feature to simulate budget cuts or new income streams.
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+Local Persistence: Implementation of localStorage to retain data across browser refreshes.
 
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Unit Testing: Comprehensive test suite using Vitest to guarantee the precision of financial calculations.
