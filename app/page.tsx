@@ -98,7 +98,10 @@ export default function Home() {
       return <div>Erro: Não foi possível calcular o status</div>
     }
 
-    const survivalDate = runway > 0 ? addMonths(new Date(), runway) : null;
+
+    const survivalDate = (runway > 0 && runway < 12000) ? addMonths(new Date(), runway) : null;
+
+
     
   return (
    <main className="bg-slate-950 w-full min-h-screen flex flex-col justify-center items-center p-4">
