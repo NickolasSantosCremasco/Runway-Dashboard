@@ -119,7 +119,7 @@ export default function Home() {
           </div>
 
           <div className="flex flex-col w-full">
-            <label htmlFor="expenses" className="text-white font-bold text-xl p-4 text-center">Digite Aqui suas Dívidas Mensais</label>
+            <label htmlFor="expenses" className="text-white font-bold text-xl p-4 text-center">Digite Aqui seus Gastos Mensais</label>
             <input type="text" id="expenses" name="expenses" value={expenses} onChange={(e) => setExpenses(formatCurrency(e.target.value))} className="bg-white rounded-md p-2" placeholder="R$ 0,00"/> 
           </div>
             
