@@ -1,8 +1,14 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { addMonths, format } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import gsap from "gsap";
+import { useGSAP } from "@gsap/react";
+import { useRef } from "react";
+
+
+
 
 type StatusConfig = {
   text: string;
@@ -13,60 +19,62 @@ type StatusConfig = {
 
 
 export default function Home() {
-  const [cash, setCash]= useState("")
-  const [expenses, setExpenses] = useState("")
-  const [passiveRevenue, setPassiveRevenue] = useState("")
-  const [runway, setRunway] = useState(0)
+  const [cash, setCash] = useState<number>(0);
+  const [expenses, setExpenses] = useState<number>(0);
+  const [passiveRevenue, setPassiveRevenue] = useState<number>(0);
+
+  const containerRef = useRef<HTMLDivElement>(null);
+  const numberRef = useRef<HTMLHeadingElement>(null);
+
   
-
-  const formatCurrency = (value: string) => { 
-    const digits = value.replace(/\D/g, "");
-
-    const amout = Number(digits) /100
+  
+  const toCurrency = (value: number) => { 
 
     return new Intl.NumberFormat('pt-BR', {
       style: 'currency',
       currency: 'BRL',
-    }).format(amout)
+    }).format(value)
   }
 
-  useEffect(() => {
-      localStorage.setItem('runway-data', JSON.stringify({cash, expenses}));
-    }, [cash, expenses]
-  )
+  // Cleaner Fuction (Tranform Everything that user digits in number)
+  const handleInputChange = (value: string, setter: (val: number) => void) => {
+    const digits = value.replace(/\D/g, "");
+    const amount = Number(digits) / 100;
+    setter(amount);
+  }
 
-  useEffect(() => {
-    const saved = localStorage.getItem('runway-data');
-    if (saved){
-      const { cash: s, expenses: e} = JSON.parse(saved);
-      setCash(s);
-      setExpenses(e)
-    }
-  }, []);
+    // (LocalStorage)
+    useEffect(() => {
+      const saved = localStorage.getItem('runway-data');
+      if (saved) {
+        const { cash: s, expenses: e, passive: p } = JSON.parse(saved);
+        setCash(s || 0);
+        setExpenses(e || 0);
+        setPassiveRevenue(p || 0);
+      }
+    }, []);
 
     useEffect(() => {
-      const parseValue = (val: string) => {
-        const cleanValue = val.replace(/\D/g, "");
-        return cleanValue ? parseFloat(cleanValue) / 100 : 0;
-      };
-
-      const s = parseValue(cash);
-      const e = parseValue(expenses);
-      const p = parseValue(passiveRevenue);
-
-      // CÁLCULO DA QUEIMA LÍQUIDA (Conforme seu diagrama)
-      const netBurn = e - p;
-
-      if (p >= e && e > 0) {
-        // Renda passiva maior ou igual ao custo = Infinito
-        setRunway(Infinity);
-      } else if (netBurn > 0) {
-        // Calcula Runway real descontando a renda passiva
-        setRunway(s / netBurn);
-      } else {
-        setRunway(0);
-      }
+      localStorage.setItem('runway-data', JSON.stringify({ cash, expenses, passive: passiveRevenue }));
     }, [cash, expenses, passiveRevenue]);
+
+
+    //Logic Calculous
+    const runway = useMemo(() => {
+      const netBurn = expenses - passiveRevenue;
+
+      if (passiveRevenue >= expenses && expenses >0) {
+        return Infinity;
+      }
+
+      if (netBurn > 0 && cash > 0) {
+        const result = cash / netBurn;
+        return result > 12000 ? 12000 : result
+      }
+
+      return 0
+    }, [cash, expenses, passiveRevenue])
+  
 
     const getStatusData = (months: number): StatusConfig => {
       if (months <= 0) return {
@@ -90,6 +98,13 @@ export default function Home() {
         borderColor: 'border-yellow-700'
       };
 
+      if (months === Infinity) return {
+        text: 'LIBERDADE FINANCEIRA: Parabéns! Sua renda passiva cobre seus custos. Você zerou o jogo da sobrevivência.',
+        color: 'text-blue-400',
+        bgColor: 'bg-blue-900/30',
+        borderColor: 'border-blue-500'
+      };
+
       // O "SAFEGUARD": Se não entrou em nenhum if acima (ou seja, >= 6), ele obrigatoriamente retorna este
       return {
         text: 'Segurança: Parabéns! Você possui um runway sólido. É o momento ideal para focar em aportes e renda passiva.',
@@ -106,57 +121,88 @@ export default function Home() {
       return <div>Erro: Não foi possível calcular o status</div>
     }
 
-
     const survivalDate = (runway > 0 && runway < 12000) ? addMonths(new Date(), runway) : null;
 
+    // --- ANIMAÇÃO DE ENTRADA (Aparecer suavemente) ---
+  useGSAP(() => {
+    const tl = gsap.timeline({ defaults: { ease: 'power3.out' } });
 
+    // Anima o título e o card em cascata (stagger)
+    tl.from('.appName', { opacity: 0, y: 20, duration: 0.8 })
+      .from('.animate-card', { opacity: 0, scale: 0.95, duration: 0.6 }, "-=0.4");
+  }, { scope: containerRef }); // O scope limita o GSAP a procurar classes apenas dentro do ref
+
+  // --- ANIMAÇÃO DO CONTADOR (Quando o runway muda) ---
+  useGSAP(() => {
+    if (!numberRef.current || runway === Infinity) return;
+
+    // Faz o número "rolar" suavemente até o valor atual
+    gsap.from(numberRef.current, {
+      textContent: 0, 
+      duration: 1,
+      snap: { textContent: 0.1 }, // Garante que mostre uma casa decimal
+      ease: "power1.out"
+    });
+  }, [runway]);
     
-  return (
-   <main className="bg-slate-950 w-full min-h-screen flex flex-col justify-center items-center p-4">
-    <div className="max-w-md w-full mb-6 text-center">
-      <h1 className="text-green-600 font-bold text-center text-3xl p-4">Runway Dashboard</h1>
-      <p className="text-slate-400">Não Calcule Saldo. Calcule tempo de <span className="text-red-600 font-semibold">Sobrevivência</span></p>
-    </div>
+ return (
+  <main className="bg-slate-950 w-full min-h-screen flex flex-col justify-center items-center p-4">
+    {/* MOVA O containerRef PARA CA: Agora ele engloba o título E o card */}
+    <div ref={containerRef} className="max-w-md w-full">
+      
+      <div className="mb-6 text-center">
+        <h1 className="text-green-600 font-bold text-center text-3xl p-4 appName">
+          Runway Dashboard
+        </h1>
+        <p className="text-slate-400">
+          Não Calcule Saldo. Calcule tempo de <span className="text-red-600 font-semibold">Sobrevivência</span>
+        </p>
+      </div>
 
-    <div className="w-full max-w-md bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-xl">
-      <div className="space-y-6">
-        <form action="" className="flex justify-center items-center flex-col gap-6">
-          <div className="flex flex-col w-full">
-            <label htmlFor="salary" className="text-white font-bold text-xl p-4 text-center">Saldo Total da Reserva</label>
-            <input type="text" id="salary" name="salary" value={cash} onChange={(e) => setCash(formatCurrency(e.target.value))} className="bg-white  rounded-md p-2" placeholder="R$ 0,00" /> 
-          </div>
+      {/* ADICIONE A CLASSE .animate-card AQUI */}
+      <div className="animate-card w-full bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-xl">
+        <div className="space-y-6">
+          <form action="" className="flex justify-center items-center flex-col gap-6">
+            <div className="flex flex-col w-full">
+              <label htmlFor="salary" className="text-white font-bold text-xl p-4 text-center">Saldo Total da Reserva</label>
+              <input type="text" id="salary" name="salary" value={toCurrency(cash)} onChange={(e) => handleInputChange(e.target.value, setCash)} className="bg-white rounded-md p-2 text-black" placeholder="R$ 0,00" /> 
+            </div>
 
-           <div className="flex flex-col w-full">
-            <label htmlFor="expenses" className="text-white font-bold text-xl p-4 text-center">Renda Passiva</label>
-            <input type="text" id="expenses" name="expenses" value={passiveRevenue} onChange={(e) => setPassiveRevenue(formatCurrency(e.target.value))} className="bg-white rounded-md p-2" placeholder="R$ 0,00"/> 
-          </div>
+            <div className="flex flex-col w-full">
+              <label htmlFor="passive" className="text-white font-bold text-xl p-4 text-center">Renda Passiva</label>
+              <input type="text" id="passive" name="passive" value={toCurrency(passiveRevenue)} onChange={(e) => handleInputChange(e.target.value, setPassiveRevenue)} className="bg-white rounded-md p-2 text-black" placeholder="R$ 0,00"/> 
+            </div>
 
-          <div className="flex flex-col w-full">
-            <label htmlFor="expenses" className="text-white font-bold text-xl p-4 text-center">Custo de vida Mensal</label>
-            <input type="text" id="expenses" name="expenses" value={expenses} onChange={(e) => setExpenses(formatCurrency(e.target.value))} className="bg-white rounded-md p-2" placeholder="R$ 0,00"/> 
-          </div>
-            
+            <div className="flex flex-col w-full">
+              <label htmlFor="expenses" className="text-white font-bold text-xl p-4 text-center">Custo de vida Mensal</label>
+              <input type="text" id="expenses" name="expenses" value={toCurrency(expenses)} onChange={(e) => handleInputChange(e.target.value, setExpenses)} className="bg-white rounded-md p-2 text-black" placeholder="R$ 0,00"/> 
+            </div>
+          </form>
+          
+          {survivalDate && runway !== Infinity && (
+              <div className="p-2 bg-slate-950 rounded-full text-center text-xs text-slate-400">
+                Duração Máxima: <span className="text-white font-bold">{format(survivalDate, "dd 'de' MMMM 'de' yyyy", { locale: ptBR })}</span>
+              </div>
+            )}
 
-        </form>
+          <div className="flex text-white justify-center flex-col items-center">
+            <p className="text-xl">Você possui:</p>
         
-        {survivalDate && (
-          <div className="mb-4 px-4 py-1 bg-slate-950 border border-slate-800 rounded-full text-xs text-slate-400 animate-pulse">
-            Duração Máxima: <span className="text-white font-bold">{format(survivalDate, "dd 'de' MMMM 'de' yyyy", { locale: ptBR })}</span>
-          </div>
-        )}
-        <div className="flex text-white justify-center flex-col items-center">
-          <p className="text-xl">Você possui:</p>
-          <h1 className={`text-4xl font-bold ${status.color}`}>{runway.toFixed(1)} Meses</h1>
+            <h1 className={`text-4xl font-bold ${status.color}`}>
+            
+            <span ref={numberRef}>
+              {runway === Infinity ? "∞" : runway.toFixed(1)}
+            </span> 
+            {runway !== Infinity && " Meses"}
+          </h1>
 
-          <div className={`${status.color} ${status.bgColor} border ${status.borderColor} p-5 mt-4 rounded-2xl`}>
-            <p>{status.text}</p>
+            <div className={`${status.color} ${status.bgColor} border ${status.borderColor} p-5 mt-4 rounded-2xl text-center`}>
+              <p>{status.text}</p>
+            </div>
           </div>
         </div>
-
-        
       </div>
     </div>
-
-   </main>
-  );
+  </main>
+);
 }
