@@ -105,7 +105,7 @@ export default function Home() {
         borderColor: 'border-blue-500'
       };
 
-      // O "SAFEGUARD": Se não entrou em nenhum if acima (ou seja, >= 6), ele obrigatoriamente retorna este
+      // "SAFEGUARD"
       return {
         text: 'Segurança: Parabéns! Você possui um runway sólido. É o momento ideal para focar em aportes e renda passiva.',
         color: 'text-green-400',
@@ -123,24 +123,24 @@ export default function Home() {
 
     const survivalDate = (runway > 0 && runway < 12000) ? addMonths(new Date(), runway) : null;
 
-    // --- ANIMAÇÃO DE ENTRADA (Aparecer suavemente) ---
+    // --- Entrace Animation ---
   useGSAP(() => {
     const tl = gsap.timeline({ defaults: { ease: 'power3.out' } });
 
-    // Anima o título e o card em cascata (stagger)
+   
     tl.from('.appName', { opacity: 0, y: 20, duration: 0.8 })
       .from('.animate-card', { opacity: 0, scale: 0.95, duration: 0.6 }, "-=0.4");
   }, { scope: containerRef }); // O scope limita o GSAP a procurar classes apenas dentro do ref
 
-  // --- ANIMAÇÃO DO CONTADOR (Quando o runway muda) ---
+  // --- Countation animation ---
   useGSAP(() => {
     if (!numberRef.current || runway === Infinity) return;
 
-    // Faz o número "rolar" suavemente até o valor atual
+    
     gsap.from(numberRef.current, {
       textContent: 0, 
       duration: 1,
-      snap: { textContent: 0.1 }, // Garante que mostre uma casa decimal
+      snap: { textContent: 0.1 }, 
       ease: "power1.out"
     });
   }, [runway]);
