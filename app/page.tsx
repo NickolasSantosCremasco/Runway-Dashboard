@@ -15,9 +15,11 @@ type StatusConfig = {
 export default function Home() {
   const [cash, setCash]= useState("")
   const [expenses, setExpenses] = useState("")
+  const [passiveRevenue, setPassiveRevenue] = useState("")
   const [runway, setRunway] = useState(0)
+  
 
-  const formatCurrency = (value: string) => {
+  const formatCurrency = (value: string) => { 
     const digits = value.replace(/\D/g, "");
 
     const amout = Number(digits) /100
@@ -42,23 +44,29 @@ export default function Home() {
     }
   }, []);
 
-  useEffect(() => {
-  
-    const parseValue = (val: string) => {
-    // Remove tudo que não é dígito e divide por 100 para ter as casas decimais
-    const cleanValue = val.replace(/\D/g, "");
-    return cleanValue ? parseFloat(cleanValue) / 100 : 0;
-  };
-    const s = parseValue(cash) ;
-    const e = parseValue(expenses) ;
+    useEffect(() => {
+      const parseValue = (val: string) => {
+        const cleanValue = val.replace(/\D/g, "");
+        return cleanValue ? parseFloat(cleanValue) / 100 : 0;
+      };
 
-    if (e > 0) {
-      setRunway(s / e)
-    } else {
-      setRunway(0)
-    }
+      const s = parseValue(cash);
+      const e = parseValue(expenses);
+      const p = parseValue(passiveRevenue);
 
-  }, [cash, expenses]) 
+      // CÁLCULO DA QUEIMA LÍQUIDA (Conforme seu diagrama)
+      const netBurn = e - p;
+
+      if (p >= e && e > 0) {
+        // Renda passiva maior ou igual ao custo = Infinito
+        setRunway(Infinity);
+      } else if (netBurn > 0) {
+        // Calcula Runway real descontando a renda passiva
+        setRunway(s / netBurn);
+      } else {
+        setRunway(0);
+      }
+    }, [cash, expenses, passiveRevenue]);
 
     const getStatusData = (months: number): StatusConfig => {
       if (months <= 0) return {
@@ -114,12 +122,17 @@ export default function Home() {
       <div className="space-y-6">
         <form action="" className="flex justify-center items-center flex-col gap-6">
           <div className="flex flex-col w-full">
-            <label htmlFor="salary" className="text-white font-bold text-xl p-4 text-center">Digite Aqui Seu Salário</label>
+            <label htmlFor="salary" className="text-white font-bold text-xl p-4 text-center">Saldo Total da Reserva</label>
             <input type="text" id="salary" name="salary" value={cash} onChange={(e) => setCash(formatCurrency(e.target.value))} className="bg-white  rounded-md p-2" placeholder="R$ 0,00" /> 
           </div>
 
+           <div className="flex flex-col w-full">
+            <label htmlFor="expenses" className="text-white font-bold text-xl p-4 text-center">Renda Passiva</label>
+            <input type="text" id="expenses" name="expenses" value={passiveRevenue} onChange={(e) => setPassiveRevenue(formatCurrency(e.target.value))} className="bg-white rounded-md p-2" placeholder="R$ 0,00"/> 
+          </div>
+
           <div className="flex flex-col w-full">
-            <label htmlFor="expenses" className="text-white font-bold text-xl p-4 text-center">Digite Aqui seus Gastos Mensais</label>
+            <label htmlFor="expenses" className="text-white font-bold text-xl p-4 text-center">Custo de vida Mensal</label>
             <input type="text" id="expenses" name="expenses" value={expenses} onChange={(e) => setExpenses(formatCurrency(e.target.value))} className="bg-white rounded-md p-2" placeholder="R$ 0,00"/> 
           </div>
             
