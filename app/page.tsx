@@ -128,16 +128,14 @@ export default function Home() {
   useGSAP(() => {
     const tl = gsap.timeline({ defaults: { ease: 'power3.out' } });
 
-   
     tl.from('.appName', { opacity: 0, y: 20, duration: 0.8 })
       .from('.animate-card', { opacity: 0, scale: 0.95, duration: 0.6 }, "-=0.4");
-  }, { scope: containerRef }); // O scope limita o GSAP a procurar classes apenas dentro do ref
+  }, { scope: containerRef }); 
 
   // --- Countation animation ---
   useGSAP(() => {
     if (!numberRef.current || runway === Infinity) return;
 
-    
     gsap.from(numberRef.current, {
       textContent: 0, 
       duration: 1,
@@ -145,10 +143,28 @@ export default function Home() {
       ease: "power1.out"
     });
   }, [runway]);
+
+  useGSAP(() => {
+    if (runway > 0) {
+      gsap.fromTo(".animate-chart-container",
+        {
+          x:100,
+          opacity:0,
+          scale:0.95,
+        },
+        {
+          x:0,
+          opacity:1,
+          scale:1,
+          duration:1,
+          ease:"power3.out"
+        }
+      );
+    }
+  }, [runway > 0])
     
  return (
   <main className="bg-slate-950 w-full min-h-screen flex flex-col justify-center items-center p-4">
-    {/* Aumentamos a largura máxima do container para comportar as duas colunas */}
     <div ref={containerRef} className="max-w-6xl w-full flex flex-col items-center">
       
       <div className="mb-8 text-center animate-item">
@@ -159,12 +175,10 @@ export default function Home() {
           Não Calcule Saldo. Calcule tempo de <span className="text-red-600 font-semibold">Sobrevivência</span>
         </p>
       </div>
-
-      {/* Grid Responsivo: 1 coluna no mobile, 2 colunas no desktop (md:flex-row) */}
       <div className="flex flex-col md:flex-row gap-8 w-full items-start justify-center">
         
-        {/* COLUNA DA ESQUERDA: O Card de Inputs e Resultado */}
-        <div className="animate-card w-full max-w-md bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-xl flex-shrink-0">
+        {/* LEFT COLUMN */}
+        <div className="animate-card w-full max-w-md bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-xl shrink-0">
           <div className="space-y-6">
             <form action="" className="flex flex-col gap-6">
               <div className="flex flex-col w-full">
@@ -205,9 +219,9 @@ export default function Home() {
           </div>
         </div>
 
-        {/* COLUNA DA DIREITA: O Gráfico (Aparece condicionalmente se houver dados) */}
+        {/* RIGHT COLUMN */}
         {runway > 0 && (
-          <div className="animate-chart w-full flex-grow">
+          <div className="animate-chart-container opacity-0 max-w-2xl w-full grow">
              <RunwayChart cash={cash} expenses={expenses} passiveRevenue={passiveRevenue} />
           </div>
         )}
