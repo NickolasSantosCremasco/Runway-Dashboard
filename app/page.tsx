@@ -6,6 +6,7 @@ import { ptBR } from "date-fns/locale";
 import gsap from "gsap";
 import { useGSAP } from "@gsap/react";
 import { useRef } from "react";
+import RunwayChart from "@/components/RunwayChart";
 
 
 
@@ -147,60 +148,70 @@ export default function Home() {
     
  return (
   <main className="bg-slate-950 w-full min-h-screen flex flex-col justify-center items-center p-4">
-    {/* MOVA O containerRef PARA CA: Agora ele engloba o título E o card */}
-    <div ref={containerRef} className="max-w-md w-full">
+    {/* Aumentamos a largura máxima do container para comportar as duas colunas */}
+    <div ref={containerRef} className="max-w-6xl w-full flex flex-col items-center">
       
-      <div className="mb-6 text-center">
-        <h1 className="text-green-600 font-bold text-center text-3xl p-4 appName">
+      <div className="mb-8 text-center animate-item">
+        <h1 className="text-green-600 font-bold text-4xl p-4 appName">
           Runway Dashboard
         </h1>
-        <p className="text-slate-400">
+        <p className="text-slate-400 text-lg">
           Não Calcule Saldo. Calcule tempo de <span className="text-red-600 font-semibold">Sobrevivência</span>
         </p>
       </div>
 
-      {/* ADICIONE A CLASSE .animate-card AQUI */}
-      <div className="animate-card w-full bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-xl">
-        <div className="space-y-6">
-          <form action="" className="flex justify-center items-center flex-col gap-6">
-            <div className="flex flex-col w-full">
-              <label htmlFor="salary" className="text-white font-bold text-xl p-4 text-center">Saldo Total da Reserva</label>
-              <input type="text" id="salary" name="salary" value={toCurrency(cash)} onChange={(e) => handleInputChange(e.target.value, setCash)} className="bg-white rounded-md p-2 text-black" placeholder="R$ 0,00" /> 
-            </div>
+      {/* Grid Responsivo: 1 coluna no mobile, 2 colunas no desktop (md:flex-row) */}
+      <div className="flex flex-col md:flex-row gap-8 w-full items-start justify-center">
+        
+        {/* COLUNA DA ESQUERDA: O Card de Inputs e Resultado */}
+        <div className="animate-card w-full max-w-md bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-xl flex-shrink-0">
+          <div className="space-y-6">
+            <form action="" className="flex flex-col gap-6">
+              <div className="flex flex-col w-full">
+                <label className="text-white font-bold text-center mb-2">Saldo Total da Reserva</label>
+                <input type="text" value={toCurrency(cash)} onChange={(e) => handleInputChange(e.target.value, setCash)} className="bg-white rounded-md p-2 text-black text-center text-lg font-semibold" placeholder="R$ 0,00" /> 
+              </div>
 
-            <div className="flex flex-col w-full">
-              <label htmlFor="passive" className="text-white font-bold text-xl p-4 text-center">Renda Passiva</label>
-              <input type="text" id="passive" name="passive" value={toCurrency(passiveRevenue)} onChange={(e) => handleInputChange(e.target.value, setPassiveRevenue)} className="bg-white rounded-md p-2 text-black" placeholder="R$ 0,00"/> 
-            </div>
+              <div className="flex flex-col w-full">
+                <label className="text-white font-bold text-center mb-2">Renda Passiva</label>
+                <input type="text" value={toCurrency(passiveRevenue)} onChange={(e) => handleInputChange(e.target.value, setPassiveRevenue)} className="bg-white rounded-md p-2 text-black text-center text-lg font-semibold" placeholder="R$ 0,00"/> 
+              </div>
 
-            <div className="flex flex-col w-full">
-              <label htmlFor="expenses" className="text-white font-bold text-xl p-4 text-center">Custo de vida Mensal</label>
-              <input type="text" id="expenses" name="expenses" value={toCurrency(expenses)} onChange={(e) => handleInputChange(e.target.value, setExpenses)} className="bg-white rounded-md p-2 text-black" placeholder="R$ 0,00"/> 
-            </div>
-          </form>
-          
+              <div className="flex flex-col w-full">
+                <label className="text-white font-bold text-center mb-2">Custo de vida Mensal</label>
+                <input type="text" value={toCurrency(expenses)} onChange={(e) => handleInputChange(e.target.value, setExpenses)} className="bg-white rounded-md p-2 text-black text-center text-lg font-semibold" placeholder="R$ 0,00"/> 
+              </div>
+            </form>
+            
+             
           {survivalDate && runway !== Infinity && (
               <div className="p-2 bg-slate-950 rounded-full text-center text-xs text-slate-400">
                 Duração Máxima: <span className="text-white font-bold">{format(survivalDate, "dd 'de' MMMM 'de' yyyy", { locale: ptBR })}</span>
               </div>
             )}
+            <div className="flex text-white justify-center flex-col items-center pt-4 border-t border-slate-800">
+              <p className="text-xl opacity-70">Você possui:</p>
+              <h1 className={`text-5xl font-bold ${status.color} my-2`}>
+                <span ref={numberRef}>
+                  {runway === Infinity ? "∞" : runway.toFixed(1)}
+                </span> 
+                {runway !== Infinity && <span className="text-2xl ml-2">Meses</span>}
+              </h1>
 
-          <div className="flex text-white justify-center flex-col items-center">
-            <p className="text-xl">Você possui:</p>
-        
-            <h1 className={`text-4xl font-bold ${status.color}`}>
-            
-            <span ref={numberRef}>
-              {runway === Infinity ? "∞" : runway.toFixed(1)}
-            </span> 
-            {runway !== Infinity && " Meses"}
-          </h1>
-
-            <div className={`${status.color} ${status.bgColor} border ${status.borderColor} p-5 mt-4 rounded-2xl text-center`}>
-              <p>{status.text}</p>
+              <div className={`${status.color} ${status.bgColor} border ${status.borderColor} p-5 mt-4 rounded-2xl text-center w-full`}>
+                <p>{status.text}</p>
+              </div>
             </div>
           </div>
         </div>
+
+        {/* COLUNA DA DIREITA: O Gráfico (Aparece condicionalmente se houver dados) */}
+        {runway > 0 && (
+          <div className="animate-chart w-full flex-grow">
+             <RunwayChart cash={cash} expenses={expenses} passiveRevenue={passiveRevenue} />
+          </div>
+        )}
+
       </div>
     </div>
   </main>
